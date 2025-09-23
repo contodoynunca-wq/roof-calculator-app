@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mont Azul Roof Exposure Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --slate-800: #1e293b;
+            --slate-600: #475569;
+            --slate-100: #f1f5f9;
+            --sky-500: #0ea5e9;
+            --white: #ffffff;
+            --red-500: #ef4444;
+            --green-500: #22c55e;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--sky-500);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-full flex items-center justify-center p-4">
+    <main class="w-full max-w-6xl bg-white rounded-xl shadow-lg flex flex-col md:flex-row overflow-hidden">
+        <!-- Input Panel -->
+        <div class="w-full md:w-1/3 bg-slate-100 p-6 space-y-6">
+            <header>
+                <h1 class="text-2xl font-bold text-slate-800">Roof Calculator</h1>
+                <p class="text-slate-600">Mont Azul Slate Specifications</p>
+            </header>
+            
+            <div>
+                <label for="slateSize" class="block text-sm font-medium text-slate-700 mb-1">Slate Size (Length x Width)</label>
+                <select id="slateSize" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                    <option>600x300</option>
+                    <option>500x300</option>
+                    <option>500x250</option>
+                    <option>450x300</option>
+                    <option>450x250</option>
+                    <option>400x250</option>
+                    <option>400x225</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="roofPitch" class="block text-sm font-medium text-slate-700 mb-1">Roof Pitch (&deg;)</label>
+                <div class="flex items-center space-x-4">
+                    <input type="range" id="roofPitch" min="17.5" max="75" step="2.5" value="20" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="roofPitchValue" class="font-semibold text-sky-600 w-12 text-center">20&deg;</span>
+                </div>
+            </div>
+
+             <div>
+                <label for="slateThickness" class="block text-sm font-medium text-slate-700 mb-1">Slate Thickness (mm)</label>
+                <select id="slateThickness" class="w-full p-2 border border-slate-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500">
+                    <option value="5">5</option>
+                    <option value="7" selected>7</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Exposure Level</label>
+                <div class="flex bg-slate-200 rounded-lg p-1">
+                    <button id="exposure-moderate" class="w-1/2 p-2 rounded-md text-sm font-medium">Moderate</button>
+                    <button id="exposure-severe" class="w-1/2 p-2 rounded-md text-sm font-medium bg-white text-sky-600 shadow">Severe</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="w-full md:w-2/3 p-6 flex flex-col">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Calculation Results</h2>
+            <div id="results-container" class="grid grid-cols-2 lg:grid-cols-3 gap-4 text-center mb-4">
+                <!-- Results will be injected here -->
+            </div>
+            <div class="flex-grow flex items-center justify-center p-4 min-h-[300px]">
+                <div class="chart-container relative w-full h-full max-h-[400px]">
+                     <canvas id="resultsChart"></canvas>
+                </div>
+            </div>
+             <div id="gemini-output-container" class="mt-4 p-4 bg-slate-50 rounded-lg text-slate-700 text-sm"></div>
+        </div>
+    </main>
+
+<script>
+    try {
+        // --- State Management ---
+        const state = {
+            exposure: 'Severe',
+        };
+
+        // --- Element Selectors ---
+        const slateSizeEl = document.getElementById('slateSize');
+        const roofPitchEl = document.getElementById('roofPitch');
+        const roofPitchValueEl = document.getElementById('roofPitchValue');
+        const slateThicknessEl = document.getElementById('slateThickness');
+        const moderateBtn = document.getElementById('exposure-moderate');
+        const severeBtn = document.getElementById('exposure-severe');
+        const resultsContainer = document.getElementById('results-container');
+        const geminiOutputContainer = document.getElementById('gemini-output-container');
+        const chartCanvas = document.getElementById('resultsChart');
+
+        // --- Data Tables (from Excel) ---
+        const lapData = {
+            'Moderate': {
+                '600x300': [[20, 145], [22.5, 95], [25, 90], [27.5, 80], [30, 70], [35, 65], [75, 60]],
+                '500x300': [[20, 105], [22.5, 95], [25, 90], [27.5, 80], [30, 70], [35, 65], [75, 60]],
+                '500x250': [[20, 140], [22.5, 105], [25, 90], [27.5, 85], [30, 75], [35, 65], [75, 60]],
+                '450x300': [[27.5, 100], [30, 90], [35, 75], [40, 65], [75, 60]],
+                '450x250': [[27.5, 125], [30, 110], [35, 95], [40, 80], [45, 70], [75, 65]],
+                '400x250': [[35, 110], [40, 95], [45, 85], [75, 75]],
+                '400x225': [[35, 120], [40, 105], [45, 95], [50, 85], [75, 75]],
+            },
+            'Severe': {
+                '600x300': [[20, 190], [22.5, 155], [25, 130], [27.5, 115], [30, 105], [35, 95], [75, 90]],
+                '500x300': [[20, 135], [22.5, 125], [25, 115], [27.5, 105], [30, 90], [35, 85], [75, 75]],
+                '500x250': [[22.5, 150], [25, 130], [27.5, 120], [30, 105], [35, 100], [75, 95]],
+                '450x300': [[27.5, 120], [30, 110], [35, 100], [40, 90], [75, 80]],
+                '450x250': [[27.5, 140], [30, 125], [35, 115], [40, 100], [45, 90], [75, 85]],
+                '400x250': [[35, 120], [40, 105], [45, 95], [75, 90]],
+                '400x225': [[35, 130], [40, 120], [45, 105], [50, 95], [75, 90]],
+            }
+        };
+
+        const slateWeights = { // kg per slate at different thickness
+            '600x300': { '5': 1.8, '7': 2.52, '9': 3.24 },
+            '500x300': { '5': 1.5, '7': 2.1, '9': 2.7 },
+            '500x250': { '5': 1.25, '7': 1.75, '9': 2.25 },
+            '450x300': { '5': 1.35, '7': 1.89, '9': 2.43 },
+            '450x250': { '5': 1.125, '7': 1.575, '9': 2.025 },
+            '400x250': { '5': 1.0, '7': 1.4, '9': 1.8 },
+            '400x225': { '5': 0.9, '7': 1.26, '9': 1.62 },
+        };
+        
+        // --- Helper Functions ---
+        function getRecommendedLap(pitch, size, exposure) {
+            const table = lapData[exposure]?.[size];
+            if (!table) return null;
+            for (const [maxPitch, lap] of table) {
+                if (pitch <= maxPitch) return lap;
+            }
+            return table[table.length - 1][1];
+        }
+
+        function createResultCard(title, value, unit = '', status = 'default') {
+            const colors = {
+                default: 'text-slate-700',
+                accepted: 'text-green-600',
+                rejected: 'text-red-600'
+            };
+            return `
+                <div class="bg-slate-100 p-3 rounded-lg">
+                    <h3 class="text-sm text-slate-500 font-medium">${title}</h3>
+                    <p class="text-xl font-bold ${colors[status]}">${value} <span class="text-base font-medium">${unit}</span></p>
+                </div>`;
+        }
+        
+        // --- Main Calculation Logic ---
+        function calculateAndDisplay() {
+            if (!slateSizeEl || !roofPitchEl || !slateThicknessEl) {
+                console.error("One or more essential input elements are missing from the DOM.");
+                resultsContainer.innerHTML = `<p class="text-red-500 col-span-full">Error: Page elements failed to load. Please refresh.</p>`;
+                return;
+            }
+
+            geminiOutputContainer.innerHTML = '';
+            // --- Get Inputs ---
+            const [length, width] = slateSizeEl.value.split('x').map(Number);
+            const pitch = parseFloat(roofPitchEl.value);
+            const thickness = parseFloat(slateThicknessEl.value) || 0;
+            const exposure = state.exposure;
+
+            // --- Core Calculations ---
+            const factorC = exposure === 'Severe' ? 0.049 : 0.0385;
+            const eFactor = 100 * 0.4599 * Math.pow(pitch, -0.732);
+            const recommendedLap = getRecommendedLap(pitch, slateSizeEl.value, exposure);
+
+            if (recommendedLap === null || isNaN(recommendedLap)) {
+                resultsContainer.innerHTML = createResultCard("Status", "Rejected", "", "rejected") + createResultCard("Reason", "Invalid combination for this exposure level.", "");
+                updateChart([],[], "No Data Available");
+                return;
+            }
+
+            const minSideLap = Math.max(eFactor, (3 * factorC * 100000) / length);
+            const actualSideLap = (width - 2 * 5) / 2; // Assuming 5mm gap
+            const battenGauge = (length - recommendedLap) / 2;
+            const slatesPerSqm = 1000000 / ((length - recommendedLap) * (width / 2));
+            const slateWeight = slateWeights[slateSizeEl.value]?.[thickness.toString()] || 0;
+            const roofWeight = slatesPerSqm * slateWeight;
+
+            // --- Validation Checks ---
+            const checks = {
+                isPitchValid: true,
+                isMinSideLapMet: minSideLap <= 54, 
+                isActualSideLapSufficient: actualSideLap > minSideLap,
+                isWidthSufficient: (2 * minSideLap + 2 * 5) < width,
+            };
+
+            if (exposure === 'Severe' && pitch < 20) checks.isPitchValid = false;
+            if (exposure === 'Moderate' && pitch < 17.5) checks.isPitchValid = false;
+
+            const finalStatus = Object.values(checks).every(Boolean);
+            const reasons = [];
+            if (!checks.isPitchValid) reasons.push("Pitch is too low for the selected exposure.");
+            if (!checks.isMinSideLapMet) reasons.push("Minimum sidelap exceeds 54mm.");
+            if (!checks.isActualSideLapSufficient) reasons.push("Actual sidelap is less than the required minimum.");
+            if (!checks.isWidthSufficient) reasons.push("Slate width is insufficient for the required sidelaps.");
+
+            // --- Display Results ---
+            let html = '';
+            html += createResultCard("Status", finalStatus ? "Accepted" : "Rejected", "", finalStatus ? "accepted" : "rejected");
+            html += createResultCard("Headlap", recommendedLap.toFixed(0), "mm");
+            html += createResultCard("Sidelap (Min)", minSideLap.toFixed(1), "mm");
+            html += createResultCard("Sidelap (Actual)", actualSideLap.toFixed(1), "mm");
+            html += createResultCard("Slates / m²", slatesPerSqm.toFixed(1));
+            html += createResultCard("Roof Weight", roofWeight.toFixed(1), "kg/m²");
+            resultsContainer.innerHTML = html;
+
+            if (!finalStatus) {
+                geminiOutputContainer.innerHTML = `<p class="font-semibold text-red-600">Reasons for Rejection:</p><ul class="list-disc list-inside">${reasons.map(r => `<li>${r}</li>`).join('')}</ul>`;
+            } else {
+                 geminiOutputContainer.innerHTML = `<button id="gemini-summary-btn" class="w-full bg-sky-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors">Generate Project Summary</button>`;
+                 document.getElementById('gemini-summary-btn').addEventListener('click', () => {
+                    const prompt = `Create a concise, professional project summary for a client based on these roofing specifications: Slate Size: ${length}x${width}mm, Roof Pitch: ${pitch} degrees, Exposure: ${exposure}, Calculated Headlap: ${recommendedLap.toFixed(0)}mm, Slates per square meter: ${slatesPerSqm.toFixed(1)}, Total Roof Weight: ${roofWeight.toFixed(1)} kg/m². The configuration has been validated and accepted.`;
+                    callGeminiAPI(prompt, document.getElementById('gemini-summary-btn'));
+                 });
+            }
+
+            // --- Update Chart ---
+            const chartLabels = ['Headlap', 'Min Sidelap', 'Actual Sidelap'];
+            const chartData = [recommendedLap, minSideLap, actualSideLap];
+            updateChart(chartLabels, chartData, 'Key Dimensions (mm)');
+        }
+
+        // --- Chart Logic ---
+        function updateChart(labels, data, title) {
+            if (!chartCanvas) return;
+            const ctx = chartCanvas.getContext('2d');
+            if (window.myChartInstance) {
+                window.myChartInstance.destroy();
+            }
+            window.myChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        backgroundColor: ['#38bdf8', '#f87171', '#4ade80'],
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: title, font: { size: 16, weight: '600' }, color: '#334155' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+        
+        // --- Gemini API Call ---
+        async function callGeminiAPI(prompt, button) {
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<div class="loader mx-auto"></div>';
+            geminiOutputContainer.innerHTML = '';
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const result = await response.json();
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No summary could be generated.";
+                geminiOutputContainer.innerHTML = `<p class="font-semibold mb-2">AI-Generated Summary:</p><p>${text.replace(/\n/g, '<br>')}</p>`;
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                geminiOutputContainer.innerHTML = `<p class="text-red-500">Failed to generate summary. Please try again later.</p>`;
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+                if(document.getElementById('gemini-summary-btn')) {
+                    document.getElementById('gemini-summary-btn').remove();
+                }
+            }
+        }
+
+        // --- Event Listeners ---
+        slateSizeEl.addEventListener('change', calculateAndDisplay);
+        roofPitchEl.addEventListener('input', (e) => {
+            roofPitchValueEl.textContent = `${e.target.value}°`;
+        });
+        roofPitchEl.addEventListener('change', calculateAndDisplay); // Recalculate when slider is released
+        slateThicknessEl.addEventListener('change', calculateAndDisplay);
+        
+        moderateBtn.addEventListener('click', () => {
+            state.exposure = 'Moderate';
+            moderateBtn.classList.add('bg-white', 'text-sky-600', 'shadow');
+            severeBtn.classList.remove('bg-white', 'text-sky-600', 'shadow');
+            calculateAndDisplay();
+        });
+
+        severeBtn.addEventListener('click', () => {
+            state.exposure = 'Severe';
+            severeBtn.classList.add('bg-white', 'text-sky-600', 'shadow');
+            moderateBtn.classList.remove('bg-white', 'text-sky-600', 'shadow');
+            calculateAndDisplay();
+        });
+
+        // --- Initial Calculation on Load ---
+        document.addEventListener('DOMContentLoaded', calculateAndDisplay);
+
+    } catch (e) {
+        console.error("A critical error occurred:", e);
+        // Display a user-friendly error message on the page itself
+        document.body.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-slate-100 p-4">
+            <div class="text-center bg-white p-8 rounded-lg shadow-md">
+                <h1 class="text-2xl font-bold text-red-600">Oops! Something went wrong.</h1>
+                <p class="text-slate-600 mt-2">The application could not start correctly. Please try refreshing the page.</p>
+                <p class="text-xs text-slate-400 mt-4">Error details are logged in the browser console.</p>
+            </div>
+        </div>`;
+    }
+</script>
+<script>
+    // Register Service Worker for PWA functionality
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js') // Use relative path
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>
