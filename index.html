@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONT AZUL | Slate Roofing Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom focus styles for better accessibility and branding */
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6; /* A nice blue */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        /* Style for the result placeholders */
+        .result-value {
+            transition: all 0.3s ease-in-out;
+            color: #3b82f6; /* Blue-500 */
+        }
+        .result-card {
+            transition: transform 0.3s ease-in-out;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">MONT AZUL <span class="text-blue-600">Slate Roofing Calculator</span> 📐</h1>
+            <p class="mt-2 text-slate-600 max-w-3xl mx-auto">This tool helps you estimate the materials required for a natural slate roof in the UK, based on British Standards. Simply enter your roof and slate details below to get a comprehensive breakdown.</p>
+        </header>
+
+        <div class="max-w-6xl mx-auto">
+            <!-- Main Content Area -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                
+                <!-- Input Section -->
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 border-b-2 border-blue-200 pb-2 mb-6">1. Enter Your Project Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Roof Area -->
+                        <div>
+                            <label for="roofArea" class="block text-sm font-medium text-slate-700 mb-1">Total Roof Area (m²)</label>
+                            <input type="number" id="roofArea" value="80" class="form-input w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition" placeholder="e.g., 80">
+                            <p class="text-xs text-slate-500 mt-1">Enter the total square meterage of all roof faces.</p>
+                        </div>
+
+                        <!-- Roof Pitch -->
+                        <div>
+                            <label for="roofPitch" class="block text-sm font-medium text-slate-700 mb-1">Roof Pitch (°)</label>
+                            <input type="number" id="roofPitch" value="35" class="form-input w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition" placeholder="e.g., 35">
+                            <p class="text-xs text-slate-500 mt-1">Enter the angle of your roof.</p>
+                        </div>
+
+                        <!-- Slate Size -->
+                        <div>
+                            <label for="slateSize" class="block text-sm font-medium text-slate-700 mb-1">Slate Size (Length x Width)</label>
+                            <select id="slateSize" class="form-select w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition">
+                                <option value="600x300">600 x 300 mm</option>
+                                <option value="500x300">500 x 300 mm</option>
+                                <option value="500x250" selected>500 x 250 mm</option>
+                                <option value="450x250">450 x 250 mm</option>
+                                <option value="400x250">400 x 250 mm</option>
+                                <option value="400x200">400 x 200 mm</option>
+                            </select>
+                            <p class="text-xs text-slate-500 mt-1">Select from common UK sizes.</p>
+                        </div>
+
+                        <!-- Slate Thickness -->
+                        <div>
+                            <label for="slateThickness" class="block text-sm font-medium text-slate-700 mb-1">Slate Thickness (mm)</label>
+                            <input type="number" id="slateThickness" value="6" class="form-input w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition" placeholder="e.g., 6">
+                            <p class="text-xs text-slate-500 mt-1">Enter the average thickness of your chosen slates.</p>
+                        </div>
+
+                        <!-- Exposure Zone -->
+                        <div>
+                            <label for="exposureZone" class="block text-sm font-medium text-slate-700 mb-1">Exposure Zone</label>
+                            <select id="exposureZone" class="form-select w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition">
+                                <option value="moderate" selected>Moderate</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                             <p class="text-xs text-slate-500 mt-1">Select according to BS 5534.</p>
+                        </div>
+
+                        <!-- Rafter Spacing -->
+                        <div>
+                            <label for="rafterSpacing" class="block text-sm font-medium text-slate-700 mb-1">Rafter Spacing</label>
+                            <select id="rafterSpacing" class="form-select w-full p-3 bg-slate-100 border border-slate-300 rounded-lg shadow-sm transition">
+                                <option value="450">Up to 450 mm</option>
+                                <option value="600" selected>Up to 600 mm</option>
+                            </select>
+                            <p class="text-xs text-slate-500 mt-1">Distance between rafter centers.</p>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Calculate Button -->
+                    <div class="mt-8 text-center">
+                        <button id="calculateBtn" class="bg-blue-600 text-white font-bold py-3 px-10 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                            Calculate Now
+                        </button>
+                    </div>
+                    <p id="error-message" class="text-center text-red-600 mt-4 font-medium" style="display: none;"></p>
+                </div>
+
+                <!-- Results Section -->
+                <div id="resultsSection" class="mt-10 pt-6 border-t-2 border-slate-100" style="display: none;">
+                    <h2 class="text-2xl font-bold text-slate-900 border-b-2 border-blue-200 pb-2 mb-6">2. Your Estimated Results</h2>
+                    <p class="text-slate-600 mb-6">Here is a detailed breakdown based on the information you provided.</p>
+                    
+                    <!-- Key Metrics -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Key Roofing Metrics</h3>
+                        <p class="text-slate-500 mb-4">These are the crucial measurements for setting out your roof correctly.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Card: Minimum Headlap -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Minimum Headlap</h4>
+                                <p class="text-2xl font-bold result-value"><span id="minHeadlap"></span> mm</p>
+                                <p class="text-xs text-slate-500 mt-1">Essential overlap for water tightness.</p>
+                            </div>
+                            <!-- Card: Batten Gauge -->
+                             <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Batten Gauge</h4>
+                                <p class="text-2xl font-bold result-value"><span id="battenGauge"></span> mm</p>
+                                <p class="text-xs text-slate-500 mt-1">(Slate Length - Headlap) / 2</p>
+                            </div>
+                            <!-- Card: Slate Nail -->
+                             <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Recommended Slate Nail</h4>
+                                <p class="text-lg font-bold result-value"><span id="slateNail"></span></p>
+                                <p class="text-xs text-slate-500 mt-1">To penetrate batten by at least 15mm.</p>
+                            </div>
+                            <!-- Card: Batten Size -->
+                             <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Recommended Batten Size</h4>
+                                <p class="text-lg font-bold result-value"><span id="battenSize"></span></p>
+                                <p class="text-xs text-slate-500 mt-1">Based on your rafter spacing.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- Quantities per m² -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Quantities per Square Metre (m²)</h3>
+                        <p class="text-slate-500 mb-4">Use these figures for smaller areas or for quick reference.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                             <!-- Card: Slates per m² -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Slates per m²</h4>
+                                <p class="text-2xl font-bold result-value"><span id="slatesPerM2"></span></p>
+                            </div>
+                            <!-- Card: Weight per m² -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Weight of Slates per m²</h4>
+                                <p class="text-2xl font-bold result-value"><span id="weightPerM2"></span> kg</p>
+                            </div>
+                            <!-- Card: Battens per m² -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Battens per m²</h4>
+                                <p class="text-2xl font-bold result-value"><span id="battensPerM2"></span> m</p>
+                            </div>
+                        </div>
+                    </div>
+
+                     <!-- Total Project Quantities -->
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-4">Total Project Quantities</h3>
+                        <p class="text-slate-500 mb-4">These are the total material estimates for your entire roof area.</p>
+                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                             <!-- Card: Total Slates -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Total Slates Required</h4>
+                                <p class="text-2xl font-bold result-value"><span id="totalSlates"></span></p>
+                                <p class="text-xs text-slate-500 mt-1">Includes 5% for waste/cuts.</p>
+                            </div>
+                            <!-- Card: Total Weight -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Total Weight of Slates</h4>
+                                <p class="text-2xl font-bold result-value"><span id="totalWeight"></span> tonnes</p>
+                                 <p class="text-xs text-slate-500 mt-1">Ensure your structure can support this load.</p>
+                            </div>
+                            <!-- Card: Total Battens -->
+                            <div class="result-card bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                <h4 class="font-semibold text-slate-700">Total Battens Required</h4>
+                                <p class="text-2xl font-bold result-value"><span id="totalBattens"></span> m</p>
+                                <p class="text-xs text-slate-500 mt-1">Includes 10% for waste/cuts.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Methodology & Disclaimer -->
+            <div class="mt-8 text-sm text-slate-600 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                <h3 class="text-lg font-semibold text-slate-800 mb-2">Calculation Methodology</h3>
+                <p class="mb-4">This calculator uses established formulas compliant with UK roofing standards (BS 5534).</p>
+                <ul class="space-y-3 list-disc list-inside">
+                    <li><span class="font-semibold">Headlap:</span> The minimum headlap is determined by a matrix of roof pitch against geographical exposure (Severe/Moderate). Lower pitches and more severe exposure require a greater headlap. For example, a 30° pitch in a moderate zone requires a 75 mm headlap, but a 85 mm headlap in a severe zone.</li>
+                    <li><span class="font-semibold">Slates per m²:</span> Calculated as: 1 / (Batten Gauge (m) × Slate Width (m)).</li>
+                    <li><span class="font-semibold">Slate Weight:</span> Calculated assuming a standard natural slate density of 2,800 kg/m³. Formula: (Slates per m²) × (Slate Volume in m³) × 2800.</li>
+                </ul>
+                <div class="mt-6 pt-4 border-t border-slate-200">
+                    <h4 class="font-semibold text-slate-800 mb-2">Disclaimer</h4>
+                    <p>This calculator provides estimates for guidance and budgeting purposes only. All quantities should be confirmed by a qualified professional roofer or surveyor on-site. Mont Azul is not liable for any discrepancies in material quantities. Always consult the latest version of BS 5534 for definitive regulations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.style.display = 'none'; // Hide error on new calculation
+
+            // 1. Get all input values
+            const roofArea = parseFloat(document.getElementById('roofArea').value) || 0;
+            const roofPitch = parseFloat(document.getElementById('roofPitch').value) || 0;
+            const slateSize = document.getElementById('slateSize').value.split('x');
+            const slateLength = parseFloat(slateSize[0]);
+            const slateWidth = parseFloat(slateSize[1]);
+            const slateThickness = parseFloat(document.getElementById('slateThickness').value) || 0;
+            const exposureZone = document.getElementById('exposureZone').value;
+            const rafterSpacing = parseInt(document.getElementById('rafterSpacing').value);
+
+            // Basic validation
+            if (roofArea <= 0 || roofPitch <= 0 || slateThickness <= 0) {
+                // Show an inline error message instead of an alert
+                errorMessage.textContent = 'Please enter valid, positive numbers for all project details.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            // 2. Perform Calculations
+            
+            // Minimum Headlap based on BS 5534 matrix
+            let minHeadlap;
+            if (roofPitch >= 90) { // Vertical slating
+                minHeadlap = 38;
+            } else if (roofPitch >= 45) {
+                minHeadlap = exposureZone === 'severe' ? 75 : 55;
+            } else if (roofPitch >= 40) {
+                minHeadlap = exposureZone === 'severe' ? 75 : 65;
+            } else if (roofPitch >= 35) {
+                minHeadlap = exposureZone === 'severe' ? 80 : 70;
+            } else if (roofPitch >= 30) {
+                minHeadlap = exposureZone === 'severe' ? 85 : 75;
+            } else if (roofPitch >= 27.5) {
+                minHeadlap = exposureZone === 'severe' ? 90 : 80;
+            } else if (roofPitch >= 25) {
+                minHeadlap = exposureZone === 'severe' ? 95 : 85;
+            } else if (roofPitch >= 22.5) {
+                minHeadlap = exposureZone === 'severe' ? 100 : 90;
+            } else if (roofPitch >= 20) {
+                minHeadlap = exposureZone === 'severe' ? 110 : 100;
+            } else { // Pitches below 20 are generally not recommended for natural slate
+                minHeadlap = 110; // Default to max for safety
+            }
+            
+            // Batten Gauge
+            const battenGauge = (slateLength - minHeadlap) / 2;
+
+            // Recommended Slate Nail
+            const requiredNailLength = (slateThickness * 2) + 15;
+            let nailSize;
+            if (requiredNailLength <= 30) nailSize = 30;
+            else if (requiredNailLength <= 35) nailSize = 35;
+            else if (requiredNailLength <= 40) nailSize = 40;
+            else if (requiredNailLength <= 45) nailSize = 45;
+            else nailSize = 50;
+            const recommendedNail = `${nailSize}mm x 2.65mm Copper Clout`;
+
+            // Recommended Batten Size
+            const recommendedBatten = rafterSpacing <= 450 ? "38mm x 25mm" : "50mm x 25mm";
+            
+            // --- Per m² calculations ---
+            const battenGaugeM = battenGauge / 1000;
+            const slateWidthM = slateWidth / 1000;
+            const slateLengthM = slateLength / 1000;
+            const slateThicknessM = slateThickness / 1000;
+
+            const slatesPerM2 = 1 / (battenGaugeM * slateWidthM);
+            const slateVolumeM3 = slateLengthM * slateWidthM * slateThicknessM;
+            const slateDensity = 2800; // kg/m³
+            const weightPerM2 = slatesPerM2 * slateVolumeM3 * slateDensity;
+            const battensPerM2 = 1 / battenGaugeM;
+
+            // --- Total project quantities ---
+            const totalSlates = slatesPerM2 * roofArea * 1.05; // 5% waste
+            const totalWeightKg = weightPerM2 * roofArea;
+            const totalWeightTonnes = totalWeightKg / 1000;
+            const totalBattens = battensPerM2 * roofArea * 1.10; // 10% waste
+
+            // 3. Display Results
+            document.getElementById('minHeadlap').textContent = minHeadlap.toFixed(0);
+            document.getElementById('battenGauge').textContent = battenGauge.toFixed(1);
+            document.getElementById('slateNail').textContent = recommendedNail;
+            document.getElementById('battenSize').textContent = recommendedBatten;
+
+            document.getElementById('slatesPerM2').textContent = slatesPerM2.toFixed(1);
+            document.getElementById('weightPerM2').textContent = weightPerM2.toFixed(1);
+            document.getElementById('battensPerM2').textContent = battensPerM2.toFixed(2);
+            
+            document.getElementById('totalSlates').textContent = Math.ceil(totalSlates).toLocaleString();
+            document.getElementById('totalWeight').textContent = totalWeightTonnes.toFixed(2);
+            document.getElementById('totalBattens').textContent = Math.ceil(totalBattens).toLocaleString();
+
+            // Show the results section with a fade-in effect
+            const resultsSection = document.getElementById('resultsSection');
+            resultsSection.style.display = 'block';
+            resultsSection.style.opacity = 0;
+            setTimeout(() => {
+                resultsSection.style.transition = 'opacity 0.5s ease-in-out';
+                resultsSection.style.opacity = 1;
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 10);
+        });
+    </script>
+
+</body>
+</html>
+
